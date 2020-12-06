@@ -1,5 +1,3 @@
-#FBFBBFFRLR
-
 puts "Part 1"
 
 def binary_search(lo, hi, down_sign, up_sign, instructions)
@@ -15,14 +13,9 @@ def binary_search(lo, hi, down_sign, up_sign, instructions)
   hi
 end
 
-def row_and_col(instructions)
+def seat_id(instructions)
   row = binary_search(0, 127, 'F', 'B', instructions[0..6])
   col = binary_search(0, 7, 'L', 'R', instructions[7..-1])
-  [row, col]
-end
-
-def seat_id(instructions)
-  row, col = row_and_col(instructions)
   row * 8 + col
 end
 
