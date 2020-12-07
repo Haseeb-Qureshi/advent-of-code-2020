@@ -38,10 +38,9 @@ puts "Part 2"
 def count_bags_in(color, bags, memo = {})
   return memo[color] if memo[color]
   return 0 if bags[color][0][0] == 0
-  memo[color] = bags[color].reduce(0) do |acc, (n, new_color)|
-    acc + n * (1 + count_bags_in(new_color, bags, memo))
+  memo[color] = bags[color].sum do |n, new_color|
+    n * (1 + count_bags_in(new_color, bags, memo))
   end
-  memo[color]
 end
 
 puts count_bags_in(TARGET, bags)
