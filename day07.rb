@@ -1,81 +1,46 @@
-require 'set'
-require 'pry'
-require 'pp'
+puts 'Part 1'
 
-ACC = 'acc'
-JMP = 'jmp'
-NOP = 'nop'
+lines = File.readlines('data07.txt').map(&:chomp)
 
-puts "Part 1"
-
-def run_until_loop(source)
-  state = { acc: 0, i: 0 }
-  previous_lines = Set.new()
-  loop do
-    previous_lines << state[:i]
-    state = run_instruction(state, source)
-    return state[:acc] if previous_lines.include?(state[:i])
+bags = {}
+lines.each do |line|
+  bag_color, rest = line.split(' bags contain ')
+  rest.chop.split(',').map do |chunk|
+    num, desc1, desc2, _ = chunk.split
+    (bags[bag_color] ||= []) << [num.to_i, "#{desc1} #{desc2}"]
   end
 end
 
-def run_instruction(state, source)
-  acc, i = state[:acc], state[:i]
-  command, v = source[state[:i]].split
-  value = v.to_i
-
-  case command
-  when ACC
-    acc += value
-    i += 1
-  when NOP
-    i += 1
-  when JMP
-    i += value
-  else
-    raise "wtf is #{command}"
+def can_dfs?(color, bags, can_reach)
+  return can_reach[color] if can_reach.has_key?(color)
+  return false if bags[color][0][0] == 0
+  can_reach[color] = bags[color].map(&:last).any? do |c|
+    if c == TARGET
+      can_reach[color] = true
+      return true
+    else
+      can_dfs?(c, bags, can_reach)
+    end
   end
-  { acc: acc, i: i }
 end
 
-source = File.readlines('data07.txt').map(&:chomp)
-puts run_until_loop(source)
+TARGET = 'shiny gold'
+can_reach = {}
+reachable_bags = bags.keys.count do |k|
+  next if k == TARGET
+  can_dfs?(k, bags, can_reach)
+end
+
+puts reachable_bags
 
 puts "Part 2"
 
-def fix_corruption(source)
-  state = { acc: 0, i: 0 }
-  previous_lines = Set.new()
-  previous_states = []
-  loop do
-    previous_lines << state[:i]
-    previous_states << state
-    state = run_instruction(state, source)
-    break if previous_lines.include?(state[:i])
-  end
-
-  loop do
-    # rewind and keep trying to branch from a previous state
-    state = previous_states.pop
-    previous_lines.delete(state[:i])
-    op, _ = source[state[:i]].split
-    next if op == ACC
-
-    # here's a candidate branching path!
-    # save state and rewrite the source
-    branching_idx = state[:i]
-    previous_lines_at_branch = previous_lines.dup
-    source[branching_idx].gsub!(*(op == JMP ? [JMP, NOP] : [NOP, JMP]))
-    loop do
-      # try out the branch
-      state = run_instruction(state, source)
-      break if previous_lines.include?(state[:i])
-      return state[:acc] if state[:i] >= source.length
-      previous_lines << state[:i]
-    end
-    # no bueno, undo...
-    source[branching_idx].gsub!(*(op == NOP ? [JMP, NOP] : [NOP, JMP]))
-    previous_lines = previous_lines_at_branch
+def count_bags_in(color, bags, memo = {})
+  return memo[color] if memo[color]
+  return 0 if bags[color][0][0] == 0
+  memo[color] = bags[color].sum do |n, new_color|
+    n * (1 + count_bags_in(new_color, bags, memo))
   end
 end
 
-puts fix_corruption(source)
+puts count_bags_in(TARGET, bags)
