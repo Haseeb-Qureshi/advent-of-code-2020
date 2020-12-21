@@ -15,7 +15,7 @@ def evaluate_simple(expr)
   num.send(operation, evaluate_simple(expr[0..-3]))
 end
 
-def eval_expr(expr)
+def eval_expr(expr, simple: true)
   expr = ['(', *expr.split(''), ')']
   val_stack = [[]]
 
@@ -26,11 +26,28 @@ def eval_expr(expr)
     when MULT then val_stack.last << token.to_sym
     when LP then val_stack << []
     when RP
-      last = evaluate_simple(val_stack.pop)
-      val_stack[-1] << last
+      last = val_stack.pop
+      val_stack[-1] << (simple ? evaluate_simple(last) : evaluate_advanced(last))
     end
   end
   val_stack[0][0]
 end
 
 puts exprs.sum { |expr| eval_expr(expr) }
+
+puts 'Part 2'
+
+def evaluate_advanced(expr)
+  stack = []
+  expr.each do |token|
+    if stack[-1] == PLUS.to_sym
+      stack.pop # throw away the plus
+      stack << stack.pop + token
+    else
+      stack << token
+    end
+  end
+  evaluate_simple(stack)
+end
+
+puts exprs.sum { |expr| eval_expr(expr, simple: false) }
