@@ -1,5 +1,3 @@
-require 'set'
-
 puts 'Part 1'
 
 names, raw_my_ticket, raw_nearby_tickets = File.read('data16.txt').split("\n\n")
@@ -41,12 +39,6 @@ end
 def permute(arr1, arr2)
   arr2.map { |idx| arr1[idx] }
 end
-#
-# def unpermute(arr1, arr2)
-#   arr2.each_with_object([]).with_index do |(idx, res), i|
-#     res[idx] = arr1[arr2.index(idx)]
-#   end
-# end
 
 def sat(my_ticket, fields, tix)
   cols = tix[0].length.times.map { |i| tix.map { |t| t[i] } } # each column
@@ -93,10 +85,6 @@ def satisfy(fields, cols, constraints, ass = [])
 
   # we failed
   nil
-end
-
-def vals_match?(vals, field)
-  vals.all? { |val| match?(field, val) }
 end
 
 puts sat(my_ticket, ranges, valid_tickets)

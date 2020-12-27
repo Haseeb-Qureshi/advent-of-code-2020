@@ -1,38 +1,43 @@
 puts 'Day 17'
 
-EMPTY = '.'
+INACTIVE = '.'
 ACTIVE = '#'
 
-# INPUT = File.readlines('data17.txt').map(&:chomp).map(&:chars)
-INPUT = '.#.
-..#
-###'.lines.map(&:chomp).map(&:chars)
+INPUT = File.readlines('data17.txt').map(&:chomp).map(&:chars)
+# INPUT = '.#.
+# ..#
+# ##'.lines.map(&:chomp).map(&:chars)
 DIFFS = ([0, 1, -1] * 3).combination(3).uniq - [[0, 0, 0]]
 
-def deep_dup(grid)
-  grid.map { |g| g.map { |a| a.dup } }
+def deep_dup(cube)
+  cube.map { |l| l.map { |a| a.dup } }
 end
 
-def valid?(grid, x, y)
-  x.between?(0, grid[0].length - 1) && y.between?(0, grid[0][0].length - 1)
+def valid?(cube, i, j, k)
+  i.between?(0, cube.length - 1) &&
+    j.between?(0, cube[0].length - 1) &&
+    k.between?(0, cube[0][0].length - 1)
 end
 
-def neighbors(grid, x, y, z)
-  DIFFS.map { |dx, dy, dz| [x + dx, y + dy, z + dz] }
-       .select { |xx, yy, _| valid?(grid, xx, yy) }
+def neighbors(cube, i, j, k)
+  DIFFS.map { |di, dj, dk| [i + di, j + dj, k + dk] }
+       .select { |ii, jj, kk| valid?(cube, ii, jj, kk) }
 end
 
-def active_neighbors(grid, x, y, z)
-  neighbors(grid, x, y, z).select { |(x, y, z)| grid[x][y][z] == ACTIVE }
-                          .count
+def active_neighbors(cube, i, j, k)
+  neighbors(cube, i, j, k).count { |(i, j, k)| cube[i][j][k] == ACTIVE }
 end
 
-def rule1?(grid, i, j, k)
-  grid[i][j][k] == EMPTY && active_neighbors(grid, i, j, k) == 3
+def rule1?(cube, i, j, k)
+  cube[i][j][k] == ACTIVE && !active_neighbors(cube, i, j, k).between?(2, 3)
 end
 
-def rule2?(grid, i, j, k)
-  grid[i][j][k] == ACTIVE && !active_neighbors(grid, i, j, k).between?(2, 3)
+def rule2?(cube, i, j, k)
+  cube[i][j][k] == INACTIVE && active_neighbors(cube, i, j, k) == 3
+end
+
+def flip(cube, i, j, k)
+  cube[i][j][k] = cube[i][j][k] == ACTIVE ? INACTIVE : ACTIVE
 end
 
 def show(cube)
@@ -40,33 +45,34 @@ def show(cube)
 end
 
 def simulate_cube(n)
-  len = INPUT.length
-  cube = Array.new((n + 1) * 2) { Array.new(len) { Array.new(len) { EMPTY } } }
-  cube[n] = INPUT.dup
+  pad_i = (n + 1) * 2
+  pad_j = (INPUT.length + 1) * 3
+  pad_k = (INPUT[0].length + 1) * 3
+
+  cube = Array.new(pad_i) { Array.new(pad_j) { Array.new(3 + pad_k) { INACTIVE } } }
+  INPUT.each_index do |i|
+    INPUT[i].each_index do |j|
+      cube[n][pad_j / 2 + i][pad_k / 2 + j] = INPUT[i][j]
+    end
+  end
 
   n.times do
     old_cube = deep_dup(cube)
-
-    show cube
 
     cube.each_index do |i|
       cube[0].each_index do |j|
         cube[0][0].each_index do |k|
           if rule1?(old_cube, i, j, k)
-            cube[i][j][k] = ACTIVE
+            flip(cube, i, j, k)
           elsif rule2?(old_cube, i, j, k)
-            cube[i][j][k] = EMPTY
+            flip(cube, i, j, k)
           end
         end
       end
     end
   end
 
-  4.times { puts }
-
-  show cube
-
   cube.join.count(ACTIVE)
 end
 
-puts simulate_cube(1)
+puts simulate_cube(6)
